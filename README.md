@@ -2,11 +2,14 @@
 
 **GPT-4-as-a-judge, measured against 3,355 real human expert votes: 87% agreement sounds great until you see Cohen's kappa of 0.46, verdicts that flip 15.8% of the time when the answers swap places, and reliability that collapses on writing tasks.**
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_App-FF4B4B?logo=streamlit&logoColor=white)](https://judgelab-lzmmbppjsxunkqizxvrdvv.streamlit.app/)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-app-red?logo=streamlit&logoColor=white)
 ![Data](https://img.shields.io/badge/data-real_MT--Bench_human_votes-brightgreen)
 ![No API key](https://img.shields.io/badge/API_key-not_required-success)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+**Live demo:** https://judgelab-lzmmbppjsxunkqizxvrdvv.streamlit.app/
 
 <!--
 Add a screenshot/GIF after deploying: docs/demo.png
