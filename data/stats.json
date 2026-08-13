@@ -1,0 +1,59 @@
+{
+  "source": "lmsys/mt_bench_human_judgments (Hugging Face), splits human + gpt4_pair",
+  "n_human_votes": 3355,
+  "n_gpt4_judgments": 2400,
+  "n_joined_pairs": 1232,
+  "agreement_all": 0.6843,
+  "kappa_all": 0.41,
+  "n_nontie": 757,
+  "agreement_nontie": 0.8705,
+  "kappa_nontie": 0.4614,
+  "gpt4_inconsistent_count": 380,
+  "gpt4_inconsistent_rate": 0.1583,
+  "verbosity_pref_human": 0.6763,
+  "verbosity_n_human": 831,
+  "verbosity_pref_gpt4": 0.7312,
+  "verbosity_n_gpt4": 878,
+  "per_category": {
+    "coding": {
+      "n": 145,
+      "agreement": 0.669,
+      "kappa": 0.3843
+    },
+    "extraction": {
+      "n": 145,
+      "agreement": 0.7517,
+      "kappa": 0.4711
+    },
+    "humanities": {
+      "n": 170,
+      "agreement": 0.7118,
+      "kappa": 0.3849
+    },
+    "math": {
+      "n": 161,
+      "agreement": 0.7081,
+      "kappa": 0.486
+    },
+    "reasoning": {
+      "n": 151,
+      "agreement": 0.6821,
+      "kappa": 0.4704
+    },
+    "roleplay": {
+      "n": 163,
+      "agreement": 0.6503,
+      "kappa": 0.3226
+    },
+    "stem": {
+      "n": 158,
+      "agreement": 0.7025,
+      "kappa": 0.2054
+    },
+    "writing": {
+      "n": 139,
+      "agreement": 0.5899,
+      "kappa": 0.1835
+    }
+  }
+}
