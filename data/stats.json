@@ -1,59 +1,313 @@
 {
   "source": "lmsys/mt_bench_human_judgments (Hugging Face), splits human + gpt4_pair",
+  "ci_method": "95% percentile bootstrap, resampling whole questions (clustered)",
   "n_human_votes": 3355,
   "n_gpt4_judgments": 2400,
   "n_joined_pairs": 1232,
-  "agreement_all": 0.6843,
-  "kappa_all": 0.41,
+  "agreement_all": {
+    "value": 0.6843,
+    "ci": [
+      0.6477,
+      0.7197
+    ],
+    "n": 1232
+  },
+  "kappa_all": {
+    "value": 0.41,
+    "ci": [
+      0.3462,
+      0.4716
+    ],
+    "n": 1232
+  },
   "n_nontie": 757,
-  "agreement_nontie": 0.8705,
-  "kappa_nontie": 0.4614,
-  "gpt4_inconsistent_count": 380,
-  "gpt4_inconsistent_rate": 0.1583,
-  "verbosity_pref_human": 0.6763,
-  "verbosity_n_human": 831,
-  "verbosity_pref_gpt4": 0.7312,
-  "verbosity_n_gpt4": 878,
+  "agreement_nontie": {
+    "value": 0.8705,
+    "ci": [
+      0.8411,
+      0.8988
+    ],
+    "n": 757
+  },
+  "kappa_nontie": {
+    "value": 0.4614,
+    "ci": [
+      0.3452,
+      0.5771
+    ],
+    "n": 757
+  },
+  "human_baseline": {
+    "n_pairs": 407,
+    "human_vs_human": {
+      "agreement": {
+        "value": 0.6536,
+        "ci": [
+          0.5985,
+          0.7065
+        ],
+        "n": 661
+      },
+      "kappa": {
+        "value": 0.4152,
+        "ci": [
+          0.3105,
+          0.5115
+        ],
+        "n": 661
+      }
+    },
+    "gpt4_vs_human": {
+      "agreement": {
+        "value": 0.662,
+        "ci": [
+          0.6147,
+          0.7062
+        ],
+        "n": 926
+      },
+      "kappa": {
+        "value": 0.3887,
+        "ci": [
+          0.3031,
+          0.4639
+        ],
+        "n": 926
+      }
+    }
+  },
+  "position": {
+    "n_judgments": 2400,
+    "inconsistent_count": 380,
+    "inconsistent_rate": {
+      "value": 0.1583,
+      "ci": [
+        0.1388,
+        0.1796
+      ],
+      "n": 2400
+    }
+  },
+  "selective": {
+    "coverage": 0.8425,
+    "n_consistent": 1038,
+    "agreement": {
+      "value": 0.7148,
+      "ci": [
+        0.6794,
+        0.7492
+      ],
+      "n": 1038
+    },
+    "kappa": {
+      "value": 0.3959,
+      "ci": [
+        0.3219,
+        0.4677
+      ],
+      "n": 1038
+    },
+    "kappa_decisive": {
+      "value": 0.4614,
+      "ci": [
+        0.3452,
+        0.5771
+      ],
+      "n": 757
+    },
+    "n_decisive": 757
+  },
+  "verbosity": {
+    "length_gap_chars": 50,
+    "human_prefers_longer": {
+      "value": 0.6763,
+      "ci": [
+        0.6242,
+        0.7275
+      ],
+      "n": 831
+    },
+    "gpt4_prefers_longer": {
+      "value": 0.7312,
+      "ci": [
+        0.6767,
+        0.7865
+      ],
+      "n": 878
+    },
+    "disagreements_gpt4_took_longer": {
+      "value": 0.7204,
+      "ci": [
+        0.625,
+        0.8077
+      ],
+      "n": 93
+    }
+  },
   "per_category": {
     "coding": {
       "n": 145,
-      "agreement": 0.669,
-      "kappa": 0.3843
+      "agreement": {
+        "value": 0.669,
+        "ci": [
+          0.5946,
+          0.7333
+        ],
+        "n": 145
+      },
+      "kappa": {
+        "value": 0.3843,
+        "ci": [
+          0.3008,
+          0.4633
+        ],
+        "n": 145
+      }
     },
     "extraction": {
       "n": 145,
-      "agreement": 0.7517,
-      "kappa": 0.4711
+      "agreement": {
+        "value": 0.7517,
+        "ci": [
+          0.6667,
+          0.8348
+        ],
+        "n": 145
+      },
+      "kappa": {
+        "value": 0.4711,
+        "ci": [
+          0.2699,
+          0.6526
+        ],
+        "n": 145
+      }
     },
     "humanities": {
       "n": 170,
-      "agreement": 0.7118,
-      "kappa": 0.3849
+      "agreement": {
+        "value": 0.7118,
+        "ci": [
+          0.6522,
+          0.7733
+        ],
+        "n": 170
+      },
+      "kappa": {
+        "value": 0.3849,
+        "ci": [
+          0.2827,
+          0.4831
+        ],
+        "n": 170
+      }
     },
     "math": {
       "n": 161,
-      "agreement": 0.7081,
-      "kappa": 0.486
+      "agreement": {
+        "value": 0.7081,
+        "ci": [
+          0.5506,
+          0.8428
+        ],
+        "n": 161
+      },
+      "kappa": {
+        "value": 0.486,
+        "ci": [
+          0.1929,
+          0.718
+        ],
+        "n": 161
+      }
     },
     "reasoning": {
       "n": 151,
-      "agreement": 0.6821,
-      "kappa": 0.4704
+      "agreement": {
+        "value": 0.6821,
+        "ci": [
+          0.5723,
+          0.7872
+        ],
+        "n": 151
+      },
+      "kappa": {
+        "value": 0.4704,
+        "ci": [
+          0.2863,
+          0.628
+        ],
+        "n": 151
+      }
     },
     "roleplay": {
       "n": 163,
-      "agreement": 0.6503,
-      "kappa": 0.3226
+      "agreement": {
+        "value": 0.6503,
+        "ci": [
+          0.5759,
+          0.7468
+        ],
+        "n": 163
+      },
+      "kappa": {
+        "value": 0.3226,
+        "ci": [
+          0.1996,
+          0.433
+        ],
+        "n": 163
+      }
     },
     "stem": {
       "n": 158,
-      "agreement": 0.7025,
-      "kappa": 0.2054
+      "agreement": {
+        "value": 0.7025,
+        "ci": [
+          0.6197,
+          0.7753
+        ],
+        "n": 158
+      },
+      "kappa": {
+        "value": 0.2054,
+        "ci": [
+          0.1419,
+          0.2702
+        ],
+        "n": 158
+      }
     },
     "writing": {
       "n": 139,
-      "agreement": 0.5899,
-      "kappa": 0.1835
+      "agreement": {
+        "value": 0.5899,
+        "ci": [
+          0.5294,
+          0.6559
+        ],
+        "n": 139
+      },
+      "kappa": {
+        "value": 0.1835,
+        "ci": [
+          0.024,
+          0.383
+        ],
+        "n": 139
+      }
+    }
+  },
+  "category_gap": {
+    "weak": "writing",
+    "strong": "math",
+    "kappa_difference": {
+      "value": 0.3025,
+      "ci": [
+        -0.0458,
+        0.617
+      ],
+      "n": 300
     }
   }
 }

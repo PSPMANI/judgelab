@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "judgelab"
+version = "2.0.0"
+description = "How much can you trust an LLM as a judge? Measured on real MT-Bench human votes, with clustered confidence intervals."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Pathi Manikanta" }]
+requires-python = ">=3.10"
+dependencies = []  # the analysis is pure standard library
+
+[project.optional-dependencies]
+app = ["streamlit>=1.38", "pandas>=2.0", "altair>=5.0"]
+dev = ["pytest>=8", "ruff>=0.5", "matplotlib>=3.7"]
+
+[tool.setuptools]
+packages = ["judgelab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]

@@ -8,14 +8,13 @@ datasets server (no API key, no auth):
   - "human":     3.3k pairwise votes by human experts
   - "gpt4_pair": GPT-4's pairwise judgments on the same answer pairs
 
-then joins them on (question_id, model_a, model_b, turn) and computes every
-statistic the app shows: agreement, Cohen's kappa, position-consistency,
-verbosity bias, and per-category reliability. Writes:
+then writes:
 
-  data/stats.json    - all aggregate numbers (small, committed)
-  data/gallery.json  - a browsable sample of pairs incl. every disagreement type
+  data/mtbench_compact.json.gz  - every vote and verdict, without the long answer
+                                  texts (~30 KB, committed; all statistics use it)
+  data/gallery.json             - a browsable sample of pairs with full answer text
 
-Reproducible: rerunning regenerates both files from the public source.
+Then `python analyze.py` computes every number from the compact file, offline.
 """
 import json
 import pathlib
@@ -23,23 +22,11 @@ import time
 import urllib.parse
 import urllib.request
 
+from judgelab.data import answer_text, build_compact, pair_key, save_compact
+
 BASE = "https://datasets-server.huggingface.co/rows"
 DATASET = "lmsys/mt_bench_human_judgments"
 OUT = pathlib.Path(__file__).parent / "data"
-
-CATEGORIES = [
-    (81, 90, "writing"), (91, 100, "roleplay"), (101, 110, "reasoning"),
-    (111, 120, "math"), (121, 130, "coding"), (131, 140, "extraction"),
-    (141, 150, "stem"), (151, 160, "humanities"),
-]
-
-
-def category(qid):
-    for lo, hi, name in CATEGORIES:
-        if lo <= qid <= hi:
-            return name
-    return "other"
-
 
 def fetch_split(split):
     """Download one split with local caching, resume, and 429 backoff."""
@@ -88,31 +75,28 @@ def fetch_split(split):
     return rows
 
 
-def answer_text(conv):
-    return " ".join(m.get("content", "") for m in conv if m.get("role") == "assistant")
+def build_gallery(human_rows, compact):
+    """A browsable sample with full answer text: every disagreement type first."""
+    from judgelab.analysis import joined_rows
 
-
-def key(r):
-    return (r["question_id"], r["model_a"], r["model_b"], r["turn"])
-
-
-def majority(votes):
-    counts = {}
-    for v in votes:
-        counts[v] = counts.get(v, 0) + 1
-    best = max(counts.values())
-    winners = [v for v, c in counts.items() if c == best]
-    return winners[0] if len(winners) == 1 else "tie"
-
-
-def multiclass_kappa(a, b):
-    n = len(a)
-    if n == 0:
-        return 0.0
-    labels = sorted(set(a) | set(b))
-    po = sum(1 for x, y in zip(a, b) if x == y) / n
-    pe = sum((a.count(l) / n) * (b.count(l) / n) for l in labels)
-    return 1.0 if pe >= 1.0 else (po - pe) / (1 - pe)
+    text = {}
+    for r in human_rows:
+        k = pair_key(r)
+        if k not in text:
+            q = next((m["content"] for m in r["conversation_a"] if m["role"] == "user"), "")
+            text[k] = (q[:400], answer_text(r["conversation_a"])[:900], answer_text(r["conversation_b"])[:900])
+    rows = joined_rows(compact["pairs"])
+    out = []
+    for j in rows:
+        q, a, b = text[pair_key(j)]
+        out.append({"question_id": j["question_id"], "model_a": j["model_a"], "model_b": j["model_b"],
+                    "turn": j["turn"], "category": j["category"], "human": j["h"], "gpt4": j["g"],
+                    "gpt4_raw": j["gpt4"], "n_human_votes": len(j["votes"]),
+                    "len_a": j["len_a"], "len_b": j["len_b"], "question": q, "answer_a": a, "answer_b": b})
+    disagreements = sorted((g for g in out if g["human"] != g["gpt4"]),
+                           key=lambda g: (g["category"], g["question_id"]))
+    agreements = [g for g in out if g["human"] == g["gpt4"]]
+    return disagreements[:40] + agreements[:20]
 
 
 def main():
@@ -120,110 +104,12 @@ def main():
     print("Downloading public MT-Bench judgment data (no key needed)...")
     human_rows = fetch_split("human")
     gpt4_rows = fetch_split("gpt4_pair")
-
-    # aggregate human votes per pair
-    human = {}
-    for r in human_rows:
-        human.setdefault(key(r), {"votes": [], "row": r})
-        human[key(r)]["votes"].append(r["winner"])
-
-    # gpt4 verdict per pair (also capture raw winner strings for consistency stats)
-    gpt4 = {}
-    for r in gpt4_rows:
-        gpt4.setdefault(key(r), []).append(r["winner"])
-
-    raw_gpt4_labels = [w for ws in gpt4.values() for w in ws]
-    inconsistent = sum(1 for w in raw_gpt4_labels if "inconsistent" in w)
-
-    def norm(w):
-        return "tie" if w.startswith("tie") else w
-
-    joined = []
-    for k, h in human.items():
-        if k not in gpt4:
-            continue
-        qid, ma, mb, turn = k
-        r = h["row"]
-        hlab = majority([norm(v) for v in h["votes"]])
-        glab = majority([norm(v) for v in gpt4[k]])
-        la = len(answer_text(r["conversation_a"]))
-        lb = len(answer_text(r["conversation_b"]))
-        joined.append({
-            "question_id": qid, "model_a": ma, "model_b": mb, "turn": turn,
-            "category": category(qid),
-            "human": hlab, "gpt4": glab,
-            "n_human_votes": len(h["votes"]),
-            "len_a": la, "len_b": lb,
-            "question": next((m["content"] for m in r["conversation_a"] if m["role"] == "user"), "")[:400],
-            "answer_a": answer_text(r["conversation_a"])[:900],
-            "answer_b": answer_text(r["conversation_b"])[:900],
-        })
-
-    print(f"joined pairs (human + gpt4 on identical pair): {len(joined)}")
-
-    # ---- stats ----
-    hl = [j["human"] for j in joined]
-    gl = [j["gpt4"] for j in joined]
-    n = len(joined)
-    agree = sum(1 for a, b in zip(hl, gl) if a == b)
-    kappa_all = multiclass_kappa(hl, gl)
-
-    nontie = [j for j in joined if j["human"] != "tie" and j["gpt4"] != "tie"]
-    agree_nt = sum(1 for j in nontie if j["human"] == j["gpt4"])
-    kappa_nt = multiclass_kappa([j["human"] for j in nontie], [j["gpt4"] for j in nontie])
-
-    # verbosity: among decisive verdicts on pairs with a meaningful length gap
-    def longer_pref(rows_, who):
-        rows_ = [j for j in rows_ if abs(j["len_a"] - j["len_b"]) > 50 and j[who] != "tie"]
-        if not rows_:
-            return 0.0, 0
-        pref = sum(1 for j in rows_
-                   if (j[who] == "model_a") == (j["len_a"] > j["len_b"]))
-        return pref / len(rows_), len(rows_)
-
-    vh, nh = longer_pref(joined, "human")
-    vg, ng = longer_pref(joined, "gpt4")
-
-    per_cat = {}
-    for c in sorted({j["category"] for j in joined}):
-        sub = [j for j in joined if j["category"] == c]
-        per_cat[c] = {
-            "n": len(sub),
-            "agreement": round(sum(1 for j in sub if j["human"] == j["gpt4"]) / len(sub), 4),
-            "kappa": round(multiclass_kappa([j["human"] for j in sub], [j["gpt4"] for j in sub]), 4),
-        }
-
-    stats = {
-        "source": "lmsys/mt_bench_human_judgments (Hugging Face), splits human + gpt4_pair",
-        "n_human_votes": len(human_rows),
-        "n_gpt4_judgments": len(gpt4_rows),
-        "n_joined_pairs": n,
-        "agreement_all": round(agree / n, 4),
-        "kappa_all": round(kappa_all, 4),
-        "n_nontie": len(nontie),
-        "agreement_nontie": round(agree_nt / len(nontie), 4),
-        "kappa_nontie": round(kappa_nt, 4),
-        "gpt4_inconsistent_count": inconsistent,
-        "gpt4_inconsistent_rate": round(inconsistent / max(1, len(raw_gpt4_labels)), 4),
-        "verbosity_pref_human": round(vh, 4), "verbosity_n_human": nh,
-        "verbosity_pref_gpt4": round(vg, 4), "verbosity_n_gpt4": ng,
-        "per_category": per_cat,
-    }
-
-    # ---- gallery: every kind of case, disagreements first ----
-    disagreements = [j for j in joined if j["human"] != j["gpt4"]]
-    agreements = [j for j in joined if j["human"] == j["gpt4"]]
-    disagreements.sort(key=lambda j: (j["category"], j["question_id"]))
-    gallery = disagreements[:40] + agreements[:20]
-
-    OUT.mkdir(exist_ok=True)
-    (OUT / "stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
+    compact = build_compact(human_rows, gpt4_rows)
+    save_compact(compact)
+    gallery = build_gallery(human_rows, compact)
     (OUT / "gallery.json").write_text(json.dumps(gallery, indent=2), encoding="utf-8")
-
-    print(json.dumps({k: v for k, v in stats.items() if k != "per_category"}, indent=2))
-    print("per-category:", json.dumps(stats["per_category"], indent=2))
-    print(f"gallery: {len(gallery)} pairs ({len(disagreements[:40])} disagreements)")
-    print("Wrote data/stats.json and data/gallery.json")
+    print(f"Wrote data/mtbench_compact.json.gz ({len(compact['pairs'])} pairs) and "
+          f"data/gallery.json ({len(gallery)} pairs). Now run: python analyze.py")
 
 
 if __name__ == "__main__":
